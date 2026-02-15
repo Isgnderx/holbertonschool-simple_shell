@@ -9,7 +9,7 @@
 extern char **environ;
 
 /**
- * get_path - gets PATH variable from environ
+ * get_path - get PATH variable from environ
  *
  * Return: PATH string or NULL
  */
@@ -27,7 +27,7 @@ char *get_path(void)
 }
 
 /**
- * find_path - finds full path of command
+ * find_path - find full path of command
  * @cmd: command
  *
  * Return: full path or NULL
@@ -45,7 +45,7 @@ char *find_path(char *cmd)
 	}
 
 	path_env = get_path();
-	if (!path_env)
+	if (!path_env || *path_env == '\0')
 		return (NULL);
 
 	path_copy = strdup(path_env);
@@ -69,21 +69,26 @@ char *find_path(char *cmd)
 }
 
 /**
- * main - simple shell with PATH support
+ * main - simple shell with PATH and proper error handling
+ * @argc: argument count
+ * @argv: argument vector
  *
- * Return: 0
+ * Return: exit status
  */
-int main(void)
+int main(int argc, char **argv)
 {
 	char *line = NULL;
 	size_t len = 0;
 	ssize_t read;
 	pid_t pid;
-	int status;
+	int status = 0;
+	int line_count = 0;
 	char *args[MAX_ARGS];
 	char *token;
 	char *cmd_path;
 	int i;
+
+	(void)argc;
 
 	while (1)
 	{
@@ -94,8 +99,10 @@ int main(void)
 		if (read == -1)
 		{
 			free(line);
-			exit(0);
+			exit(status);
 		}
+
+		line_count++;
 
 		line[strcspn(line, "\n")] = '\0';
 
@@ -113,10 +120,18 @@ int main(void)
 
 		cmd_path = find_path(args[0]);
 
-		/* fork only if command exists */
+		/* Command not found */
 		if (cmd_path == NULL)
 		{
-			fprintf(stderr, "./hsh: %s: not found\n", args[0]);
+			fprintf(stderr, "%s: %d: %s: not found\n",
+				argv[0], line_count, args[0]);
+			status = 127;
+
+			if (!isatty(STDIN_FILENO))
+			{
+				free(line);
+				exit(127);
+			}
 			continue;
 		}
 
@@ -124,15 +139,16 @@ int main(void)
 		if (pid == 0)
 		{
 			execve(cmd_path, args, environ);
-			perror("./hsh");
-			exit(EXIT_FAILURE);
+			perror(argv[0]);
+			exit(127);
 		}
 		else
 		{
 			wait(&status);
+			status = WEXITSTATUS(status);
 		}
 	}
 
 	free(line);
-	return (0);
+	return (status);
 }
