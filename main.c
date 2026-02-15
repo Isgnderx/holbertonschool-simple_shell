@@ -9,8 +9,46 @@
 extern char **environ;
 
 /**
- * main - simple shell with arguments support
- *
+ * find_path - finds full path of command
+ * @cmd: command
+ * Return: full path or NULL
+ */
+char *find_path(char *cmd)
+{
+	char *path_env, *path_copy, *dir;
+	static char full_path[1024];
+
+	if (strchr(cmd, '/'))
+	{
+		if (access(cmd, X_OK) == 0)
+			return (cmd);
+		return (NULL);
+	}
+
+	path_env = getenv("PATH");
+	if (!path_env)
+		return (NULL);
+
+	path_copy = strdup(path_env);
+	dir = strtok(path_copy, ":");
+
+	while (dir)
+	{
+		snprintf(full_path, sizeof(full_path), "%s/%s", dir, cmd);
+		if (access(full_path, X_OK) == 0)
+		{
+			free(path_copy);
+			return (full_path);
+		}
+		dir = strtok(NULL, ":");
+	}
+
+	free(path_copy);
+	return (NULL);
+}
+
+/**
+ * main - simple shell with PATH support
  * Return: 0
  */
 int main(void)
@@ -22,6 +60,7 @@ int main(void)
 	int status;
 	char *args[MAX_ARGS];
 	char *token;
+	char *cmd_path;
 	int i;
 
 	while (1)
@@ -40,7 +79,7 @@ int main(void)
 
 		i = 0;
 		token = strtok(line, " ");
-		while (token != NULL && i < MAX_ARGS - 1)
+		while (token && i < MAX_ARGS - 1)
 		{
 			args[i++] = token;
 			token = strtok(NULL, " ");
@@ -50,10 +89,19 @@ int main(void)
 		if (args[0] == NULL)
 			continue;
 
+		cmd_path = find_path(args[0]);
+
+		/* fork yalnız command mövcuddursa */
+		if (cmd_path == NULL)
+		{
+			fprintf(stderr, "./hsh: %s: not found\n", args[0]);
+			continue;
+		}
+
 		pid = fork();
 		if (pid == 0)
 		{
-			execve(args[0], args, environ);
+			execve(cmd_path, args, environ);
 			perror("./hsh");
 			exit(EXIT_FAILURE);
 		}
