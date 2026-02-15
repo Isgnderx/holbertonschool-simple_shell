@@ -6,6 +6,13 @@
 
 #define MAX_ARGS 64
 
+extern char **environ;
+
+/**
+ * main - simple shell with arguments support
+ *
+ * Return: 0
+ */
 int main(void)
 {
 	char *line = NULL;
@@ -46,9 +53,9 @@ int main(void)
 		pid = fork();
 		if (pid == 0)
 		{
-			execve(args[0], args, NULL);
+			execve(args[0], args, environ);
 			perror("./hsh");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		else
 		{
