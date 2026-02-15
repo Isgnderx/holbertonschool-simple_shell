@@ -9,8 +9,27 @@
 extern char **environ;
 
 /**
+ * get_path - gets PATH variable from environ
+ *
+ * Return: PATH string or NULL
+ */
+char *get_path(void)
+{
+	int i = 0;
+
+	while (environ[i])
+	{
+		if (strncmp(environ[i], "PATH=", 5) == 0)
+			return (environ[i] + 5);
+		i++;
+	}
+	return (NULL);
+}
+
+/**
  * find_path - finds full path of command
  * @cmd: command
+ *
  * Return: full path or NULL
  */
 char *find_path(char *cmd)
@@ -25,13 +44,15 @@ char *find_path(char *cmd)
 		return (NULL);
 	}
 
-	path_env = getenv("PATH");
+	path_env = get_path();
 	if (!path_env)
 		return (NULL);
 
 	path_copy = strdup(path_env);
-	dir = strtok(path_copy, ":");
+	if (!path_copy)
+		return (NULL);
 
+	dir = strtok(path_copy, ":");
 	while (dir)
 	{
 		snprintf(full_path, sizeof(full_path), "%s/%s", dir, cmd);
@@ -49,6 +70,7 @@ char *find_path(char *cmd)
 
 /**
  * main - simple shell with PATH support
+ *
  * Return: 0
  */
 int main(void)
@@ -91,7 +113,7 @@ int main(void)
 
 		cmd_path = find_path(args[0]);
 
-		/* fork yalnız command mövcuddursa */
+		/* fork only if command exists */
 		if (cmd_path == NULL)
 		{
 			fprintf(stderr, "./hsh: %s: not found\n", args[0]);
