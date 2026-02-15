@@ -1,25 +1,28 @@
-#include "shell.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <string.h>
+
+extern char **environ;
 
 /**
- * main - entry point
- * @argc: argument count
- * @argv: argument vector
+ * main - simple shell
  *
  * Return: 0
  */
-int main(int argc, char **argv)
+int main(void)
 {
 	char *line = NULL;
 	size_t len = 0;
 	ssize_t read;
-	char **args;
-
-	(void)argc;
+	pid_t pid;
+	char *args[2];
 
 	while (1)
 	{
 		if (isatty(STDIN_FILENO))
-			print_prompt();
+			write(STDOUT_FILENO, "#cisfun$ ", 9);
 
 		read = getline(&line, &len, stdin);
 		if (read == -1)
@@ -28,18 +31,22 @@ int main(int argc, char **argv)
 		if (line[read - 1] == '\n')
 			line[read - 1] = '\0';
 
-		args = parse_line(line);
-		if (args && args[0])
+		args[0] = line;
+		args[1] = NULL;
+
+		pid = fork();
+		if (pid == 0)
 		{
-			if (strcmp(args[0], "exit") == 0)
+			if (execve(line, args, environ) == -1)
 			{
-				free_args(args);
-				break;
+				perror("./shell");
+				exit(EXIT_FAILURE);
 			}
-			execute_command(args, argv[0]);
 		}
-		free_args(args);
+		else
+			wait(NULL);
 	}
+
 	free(line);
 	return (0);
 }
