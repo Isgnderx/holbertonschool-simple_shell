@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <string.h>
 
 int main(void)
 {
@@ -11,6 +12,8 @@ int main(void)
 	pid_t pid;
 	int status;
 	char *args[2];
+	char *start;
+	char *end;
 
 	while (1)
 	{
@@ -24,19 +27,31 @@ int main(void)
 			exit(0);
 		}
 
-		if (line[read - 1] == '\n')
-			line[read - 1] = '\0';
+		line[strcspn(line, "\n")] = '\0';
 
-		if (line[0] == '\0')
+		/* Trim leading spaces */
+		start = line;
+		while (*start == ' ' || *start == '\t')
+			start++;
+
+		/* Trim trailing spaces */
+		end = start + strlen(start) - 1;
+		while (end > start && (*end == ' ' || *end == '\t'))
+		{
+			*end = '\0';
+			end--;
+		}
+
+		if (*start == '\0')
 			continue;
 
 		pid = fork();
 		if (pid == 0)
 		{
-			args[0] = line;
+			args[0] = start;
 			args[1] = NULL;
 
-			execve(line, args, NULL);
+			execve(start, args, NULL);
 			perror("./hsh");
 			exit(1);
 		}
