@@ -4,6 +4,8 @@
 #include <sys/wait.h>
 #include <string.h>
 
+#define MAX_ARGS 64
+
 int main(void)
 {
 	char *line = NULL;
@@ -11,9 +13,9 @@ int main(void)
 	ssize_t read;
 	pid_t pid;
 	int status;
-	char *args[2];
-	char *start;
-	char *end;
+	char *args[MAX_ARGS];
+	char *token;
+	int i;
 
 	while (1)
 	{
@@ -29,29 +31,22 @@ int main(void)
 
 		line[strcspn(line, "\n")] = '\0';
 
-		/* Trim leading spaces */
-		start = line;
-		while (*start == ' ' || *start == '\t')
-			start++;
-
-		/* Trim trailing spaces */
-		end = start + strlen(start) - 1;
-		while (end > start && (*end == ' ' || *end == '\t'))
+		i = 0;
+		token = strtok(line, " ");
+		while (token != NULL && i < MAX_ARGS - 1)
 		{
-			*end = '\0';
-			end--;
+			args[i++] = token;
+			token = strtok(NULL, " ");
 		}
+		args[i] = NULL;
 
-		if (*start == '\0')
+		if (args[0] == NULL)
 			continue;
 
 		pid = fork();
 		if (pid == 0)
 		{
-			args[0] = start;
-			args[1] = NULL;
-
-			execve(start, args, NULL);
+			execve(args[0], args, NULL);
 			perror("./hsh");
 			exit(1);
 		}
