@@ -10,7 +10,6 @@ extern char **environ;
 
 /**
  * get_path - get PATH variable from environ
- *
  * Return: PATH string or NULL
  */
 char *get_path(void)
@@ -29,7 +28,6 @@ char *get_path(void)
 /**
  * find_path - find full path of command
  * @cmd: command
- *
  * Return: full path or NULL
  */
 char *find_path(char *cmd)
@@ -69,10 +67,9 @@ char *find_path(char *cmd)
 }
 
 /**
- * main - simple shell with PATH and proper error handling
+ * main - simple shell with PATH and exit built-in
  * @argc: argument count
  * @argv: argument vector
- *
  * Return: exit status
  */
 int main(int argc, char **argv)
@@ -103,7 +100,6 @@ int main(int argc, char **argv)
 		}
 
 		line_count++;
-
 		line[strcspn(line, "\n")] = '\0';
 
 		i = 0;
@@ -118,9 +114,15 @@ int main(int argc, char **argv)
 		if (args[0] == NULL)
 			continue;
 
+		/* EXIT BUILTIN */
+		if (strcmp(args[0], "exit") == 0)
+		{
+			free(line);
+			exit(status);
+		}
+
 		cmd_path = find_path(args[0]);
 
-		/* Command not found */
 		if (cmd_path == NULL)
 		{
 			fprintf(stderr, "%s: %d: %s: not found\n",
