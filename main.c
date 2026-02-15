@@ -67,7 +67,22 @@ char *find_path(char *cmd)
 }
 
 /**
- * main - simple shell with PATH and exit built-in
+ * print_env - prints environment variables
+ */
+void print_env(void)
+{
+	int i = 0;
+
+	while (environ[i])
+	{
+		write(STDOUT_FILENO, environ[i], strlen(environ[i]));
+		write(STDOUT_FILENO, "\n", 1);
+		i++;
+	}
+}
+
+/**
+ * main - simple shell with exit and env built-ins
  * @argc: argument count
  * @argv: argument vector
  * Return: exit status
@@ -119,6 +134,13 @@ int main(int argc, char **argv)
 		{
 			free(line);
 			exit(status);
+		}
+
+		/* ENV BUILTIN */
+		if (strcmp(args[0], "env") == 0)
+		{
+			print_env();
+			continue;
 		}
 
 		cmd_path = find_path(args[0]);
