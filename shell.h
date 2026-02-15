@@ -5,16 +5,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/wait.h>
-
-#define MAX_ARGS 64
 
 extern char **environ;
 
-void print_prompt(void);
-char **parse_line(char *line);
-char *find_path(char *cmd);
-void execute_command(char **args, char *prog_name);
-void free_args(char **args);
+char *trim(char *str);
+void execute_command(char *command, char *prog_name, int line_count);
 
-#endif /* SHELL_H */
+#endif
